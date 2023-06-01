@@ -1,0 +1,64 @@
+version: '3'
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - share-net
+
+  mongodb:
+    image: mongo:latest
+    container_name: some-mongo
+    ports:
+      - '27017:27017'
+    networks:
+      - share-net
+
+  gateway:
+    build:
+      context: .
+      dockerfile: ./apps/gateway/Dockerfile
+      target: development
+    command: npm run start:dev gateway
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - rabbitmq
+      - mongodb
+    links:
+      - rabbitmq
+      - mongodb
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - share-net
+
+  service-stock:
+    build:
+      context: .
+      dockerfile: ./apps/service-stock/Dockerfile
+      target: development
+    command: npm run start:dev service-stock
+    restart: always
+    depends_on:
+      - rabbitmq
+      - mongodb
+    links:
+      - rabbitmq
+      - mongodb
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - share-net
+
+
+networks:
+  share-net:
+    driver: bridge
