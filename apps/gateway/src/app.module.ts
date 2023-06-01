@@ -1,7 +1,6 @@
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -12,11 +11,11 @@ import { AppService } from './app.service';
           type: 'topic',
         },
       ],
-      uri: 'amqp://rabbitmq:5672',
+      uri: 'amqp://user:password@rabbitmq:5672',
+      connectionInitOptions: { wait: true },
     }),
     AppModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule { }

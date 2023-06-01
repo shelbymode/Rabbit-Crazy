@@ -1,18 +1,31 @@
-version: '3'
-services:
+version: "3.8"
 
+networks:
+  share-net:
+    driver: bridge
+
+services:
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: 'rabbitmq'
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
     ports:
       - 5672:5672
       - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 1s
+      retries: 20
     networks:
       - share-net
 
   mongodb:
     image: mongo:latest
-    container_name: some-mongo
+    container_name: mongodb
     ports:
       - '27017:27017'
     networks:
@@ -22,17 +35,19 @@ services:
     build:
       context: .
       dockerfile: ./apps/gateway/Dockerfile
-      target: development
     command: npm run start:dev gateway
-    restart: always
+    container_name: gateway
+    depends_on:
+      mongodb:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure:5
+    links: 
+      - mongodb
+      - rabbitmq
     ports:
       - '3000:3000'
-    depends_on:
-      - rabbitmq
-      - mongodb
-    links:
-      - rabbitmq
-      - mongodb
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -43,22 +58,20 @@ services:
     build:
       context: .
       dockerfile: ./apps/service-stock/Dockerfile
-      target: development
     command: npm run start:dev service-stock
-    restart: always
+    container_name: service-stock
     depends_on:
-      - rabbitmq
+      mongodb:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure:5
+    links: 
       - mongodb
-    links:
       - rabbitmq
-      - mongodb
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     networks:
       - share-net
 
-
-networks:
-  share-net:
-    driver: bridge

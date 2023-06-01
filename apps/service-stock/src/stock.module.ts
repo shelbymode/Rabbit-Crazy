@@ -13,10 +13,11 @@ import { StockService } from './stock.service';
           type: 'topic',
         },
       ],
-      uri: 'amqp://rabbitmq:5672',
+      uri: 'amqp://user:password@rabbitmq:5672',
+      connectionInitOptions: { wait: true },
     }),
     StockModule,
   ],
   providers: [StockService, ...databaseProviders, ...modelProviders],
 })
-export class StockModule {}
+export class StockModule { }

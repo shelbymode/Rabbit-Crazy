@@ -1,11 +1,11 @@
-import { RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection, RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Stock } from './interfaces/stock.interface';
 
 @Injectable()
 export class StockService {
-  constructor(@Inject('STOCK_MODEL') private stockModel: Model<Stock>) { }
+  constructor(@Inject('STOCK_MODEL') private stockModel: Model<Stock>, private readonly amqpConnection: AmqpConnection) { }
 
   @RabbitRPC({
     exchange: 'stock',
